@@ -1,0 +1,10 @@
+=== ORIG_HEAD ===
+783d6539dde96b8873c5b5da3e79cc14cd64830b
+=== MERGE_HEAD ===
+ef1783444b61a8671beea4ce1f4d0202677dfbfb
+=== MERGE_MODE ===
+no-ff=== MERGE_MSG ===
+Merge branch 'branchF-2'
+
+#Conflicts:
+#	veal.txt

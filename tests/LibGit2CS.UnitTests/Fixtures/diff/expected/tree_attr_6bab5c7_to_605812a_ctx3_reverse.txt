@@ -1,0 +1,79 @@
+diff --git b/.gitattributes a/.gitattributes
+index 94da4fa..f2c6d71 100644
+--- b/.gitattributes
++++ a/.gitattributes
+@@ -1,7 +1,4 @@
+ * rootattr
+ root_test2 -rootattr
+ root_test3 !rootattr
+-binfile	   		   binary
+-abc		foo bar baz
+-[attr]mymacro positive -negative !rootattr
+-macro* mymacro another=77
++
+diff --git b/binfile a/binfile
+deleted file mode 100644
+index d800886..0000000
+Binary files b/binfile and /dev/null differ
+diff --git b/macro_test a/macro_test
+deleted file mode 100644
+index ff69f86..0000000
+--- b/macro_test
++++ /dev/null
+@@ -1 +0,0 @@
+-Yo
+diff --git b/subdir/.gitattributes a/subdir/.gitattributes
+index 99eae47..c7aadd7 100644
+--- b/subdir/.gitattributes
++++ a/subdir/.gitattributes
+@@ -1,5 +1,3 @@
+ * subattr=yes -negattr
+-subdir/*.txt another=one
+-ab*			 merge=filfre
+-abc			 -foo -bar
+-*.c			 frotz
++subdir_file another=one
++
+diff --git b/subdir/abc a/subdir/abc
+deleted file mode 100644
+index 3e42ffc..0000000
+--- b/subdir/abc
++++ /dev/null
+@@ -1,37 +0,0 @@
+-# Test file from gitattributes(5) example:
+-
+-If you have these three gitattributes file:
+-
+-   (in $GIT_DIR/info/attributes)
+-
+-	a*      foo !bar -baz
+-
+-	(in .gitattributes)
+-	abc     foo bar baz
+-
+-	(in t/.gitattributes)
+-	ab*     merge=filfre
+-	abc     -foo -bar
+-	*.c     frotz
+-
+-the attributes given to path t/abc are computed as follows:
+-
+-1. By examining t/.gitattributes (which is in the same directory as the path
+-   in question), git finds that the first line matches. merge attribute is
+-   set. It also finds that the second line matches, and attributes foo and
+-   bar are unset.
+-2. Then it examines .gitattributes (which is in the parent directory), and
+-   finds that the first line matches, but t/.gitattributes file already
+-   decided how merge, foo and bar attributes should be given to this path,
+-   so it leaves foo and bar unset. Attribute baz is set.
+-3. Finally it examines $GIT_DIR/info/attributes. This file is used to
+-   override the in-tree settings. The first line is a match, and foo is set,
+-   bar is reverted to unspecified state, and baz is unset.
+-
+-As the result, the attributes assignment to t/abc becomes:
+-
+-	foo     set to true
+-	bar     unspecified
+-	baz     set to false
+-	merge   set to string value "filfre"
+-	frotz   unspecified

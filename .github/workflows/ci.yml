@@ -1,0 +1,99 @@
+# Adapted from LibSsh2CS at commit 2a5e008d4eb8ed895638bf17e0fc6350eb2c8769.
+# Original repository: https://github.com/MM-YJN/LibSsh2CS
+# Copyright and BSD-3-Clause terms are retained in .github/LICENSE.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: ${{ matrix.platform }}-tests
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-26.04
+          - platform: windows
+            runner: windows-2025
+          - platform: macos
+            runner: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore packages
+        run: dotnet restore LibGit2CS.slnx --locked-mode
+
+      - name: Verify formatting
+        if: ${{ matrix.platform == 'linux' }}
+        run: dotnet format LibGit2CS.slnx --verify-no-changes --no-restore
+
+      - name: Build Release
+        run: dotnet build LibGit2CS.slnx -c Release --no-restore -p:ContinuousIntegrationBuild=true
+
+      - name: Test coverage checker
+        if: ${{ matrix.platform == 'linux' }}
+        run: env -u GITHUB_STEP_SUMMARY python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+
+      - name: Verify Git
+        run: git --version
+
+      - name: Verify Linux integration prerequisites
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          test "$(docker info --format '{{.OSType}}')" = linux
+          test -S /var/run/docker.sock
+          command -v ssh-agent
+          command -v ssh-add
+
+      # The hosted Windows engine supports Windows containers; these fixtures
+      # require Linux containers. Stop it so the existing gates skip them.
+      - name: Stop Windows Docker engine
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          $dockerService = Get-Service -Name docker -ErrorAction SilentlyContinue
+          if ($dockerService) {
+            Stop-Service -InputObject $dockerService -ErrorAction Stop
+          }
+
+      - name: Run tests with coverage
+        run: >-
+          dotnet test --solution LibGit2CS.slnx -c Release --no-build
+          --no-artifact-post-processing --results-directory ./artifacts/test-results --
+          --coverlet --coverlet-output-format cobertura
+          --coverlet-include '[LibGit2CS]*' --report-xunit-trx
+
+      - name: Upload coverage and test results
+        if: ${{ always() && hashFiles('artifacts/test-results/**') != '' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ matrix.platform }}-test-results
+          path: artifacts/test-results/
+          retention-days: 14
+          if-no-files-found: error

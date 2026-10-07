@@ -1,0 +1,58 @@
+diff --git a/file_deleted b/file_deleted
+deleted file mode 100644
+index 5452d32..0000000
+--- a/file_deleted
++++ /dev/null
+@@ -1 +0,0 @@
+-file_deleted
+diff --git a/modified_file b/modified_file
+index 452e424..0a53963 100644
+--- a/modified_file
++++ b/modified_file
+@@ -1 +1,2 @@
+ modified_file
++modified_file
+diff --git a/staged_changes_file_deleted b/staged_changes_file_deleted
+deleted file mode 100644
+index a6be623..0000000
+--- a/staged_changes_file_deleted
++++ /dev/null
+@@ -1,2 +0,0 @@
+-staged_changes_file_deleted
+-staged_changes_file_deleted
+diff --git a/staged_changes_modified_file b/staged_changes_modified_file
+index 906ee77..011c344 100644
+--- a/staged_changes_modified_file
++++ b/staged_changes_modified_file
+@@ -1,2 +1,3 @@
+ staged_changes_modified_file
+ staged_changes_modified_file
++staged_changes_modified_file
+diff --git a/staged_new_file_deleted_file b/staged_new_file_deleted_file
+deleted file mode 100644
+index 90b8c29..0000000
+--- a/staged_new_file_deleted_file
++++ /dev/null
+@@ -1 +0,0 @@
+-staged_new_file_deleted_file
+diff --git a/staged_new_file_modified_file b/staged_new_file_modified_file
+index ed06290..8b090c0 100644
+--- a/staged_new_file_modified_file
++++ b/staged_new_file_modified_file
+@@ -1 +1,2 @@
+ staged_new_file_modified_file
++staged_new_file_modified_file
+diff --git a/subdir/deleted_file b/subdir/deleted_file
+deleted file mode 100644
+index 1888c80..0000000
+--- a/subdir/deleted_file
++++ /dev/null
+@@ -1 +0,0 @@
+-subdir/deleted_file
+diff --git a/subdir/modified_file b/subdir/modified_file
+index a619198..57274b7 100644
+--- a/subdir/modified_file
++++ b/subdir/modified_file
+@@ -1 +1,2 @@
+ subdir/modified_file
++subdir/modified_file

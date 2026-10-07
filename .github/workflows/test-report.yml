@@ -1,0 +1,131 @@
+# Adapted from LibSsh2CS at commit 2a5e008d4eb8ed895638bf17e0fc6350eb2c8769.
+# Original repository: https://github.com/MM-YJN/LibSsh2CS
+# Copyright and BSD-3-Clause terms are retained in .github/LICENSE.
+
+name: Test Report
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+# Execute reporting tools from the trusted default branch, never from a PR.
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  report:
+    name: ${{ matrix.platform }} test report
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux, windows, macos]
+    steps:
+      - name: Check out trusted sources for failure details
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download test results
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: ${{ matrix.platform }}-test-results
+          path: artifacts/test-results/${{ matrix.platform }}
+
+      - name: Summarize tests, including skips
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          name: Tests - ${{ matrix.platform }}
+          report-title: Tests - ${{ matrix.platform }}
+          path: artifacts/test-results/${{ matrix.platform }}/**/*.trx
+          reporter: dotnet-trx
+          use-actions-summary: 'true'
+          list-tests: failed
+
+  coverage:
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out trusted reporting tools
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          global-json-file: global.json
+
+      # Preserve artifact directories to avoid collisions between OS results.
+      - name: Download coverage inputs
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: '*-test-results'
+          merge-multiple: false
+          path: artifacts/coverage-input
+
+      - name: Validate all six coverage inputs
+        run: python3 .github/scripts/check_coverage.py artifacts/coverage-input --validate-inputs
+
+      - name: Generate combined coverage report
+        id: coverage
+        run: |
+          dotnet tool restore
+          dotnet reportgenerator \
+            '-reports:./artifacts/coverage-input/**/*.cobertura.*.xml' \
+            '-targetdir:./artifacts/coverage-combined' \
+            '-sourcedirs:./source/LibGit2CS' \
+            '-assemblyfilters:+LibGit2CS' \
+            '-reporttypes:Html;MarkdownSummaryGithub;Cobertura'
+
+      - name: Enforce combined coverage thresholds
+        if: ${{ !cancelled() && steps.coverage.outcome == 'success' }}
+        run: |
+          python3 .github/scripts/check_coverage.py artifacts/coverage-combined \
+            --line-threshold 85 --branch-threshold 80
+
+      - name: Publish detailed coverage summary
+        if: ${{ !cancelled() && steps.coverage.outcome == 'success' }}
+        run: cat artifacts/coverage-combined/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload combined coverage report
+        if: ${{ !cancelled() && steps.coverage.outcome == 'success' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: combined-coverage
+          path: artifacts/coverage-combined/
+          retention-days: 14
+          if-no-files-found: error
+
+      # workflow_run jobs belong to the default branch. Publish the gate on
+      # the commit tested by CI so branch protection can require it for PRs.
+      - name: Publish coverage check
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          CONCLUSION: ${{ job.status }}
+        run: |
+          jq -n \
+            --arg sha "$TESTED_SHA" \
+            --arg conclusion "$CONCLUSION" \
+            --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{name: "Coverage", head_sha: $sha, status: "completed", conclusion: $conclusion,
+              details_url: $url, output: {title: "Combined coverage",
+              summary: "Requires 85% line and 80% branch coverage from both suites on all three operating systems. See Test Report for the summary and HTML artifact."}}' \
+            | gh api --method POST "repos/$GITHUB_REPOSITORY/check-runs" --input -

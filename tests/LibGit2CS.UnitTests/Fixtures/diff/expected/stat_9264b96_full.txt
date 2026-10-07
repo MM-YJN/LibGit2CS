@@ -1,0 +1,2 @@
+ file1.txt | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)

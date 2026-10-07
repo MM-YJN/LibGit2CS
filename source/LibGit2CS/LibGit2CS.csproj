@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>A managed C# port of libgit2.</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Preserve the explicitly included source build configuration (.editorconfig). -->
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <NoWarn>$(NoWarn);CA1008;CA1021;CA1045;CA1055;CA1308;CA1502;CA1028;CA1720</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Use the complete license file: the library is not MIT/GPL dual-licensed. -->
+    <None Include="../../LICENSE;../../THIRD-PARTY-NOTICES.txt"
+          Pack="true" PackagePath="/;src/" />
+    <None Update="README.md" Pack="true" PackagePath="/;src/source/LibGit2CS/" />
+    <None Include="../../README.md" Pack="true" PackagePath="src/" />
+    <None Include="../../docs/**/*.md" Pack="true" PackagePath="src/docs/" />
+    <None Include="../../LICENSES/*" Pack="true" PackagePath="LICENSES/;src/LICENSES/" />
+
+    <!-- Ship the corresponding library source and build inputs with each binary. -->
+    <None Include="**/*.cs" Exclude="bin/**;obj/**"
+          Pack="true" PackagePath="src/source/LibGit2CS/" />
+    <None Include="LibGit2CS.csproj" Pack="true" PackagePath="src/source/LibGit2CS/" />
+    <None Update="packages.lock.json;LICENSE" Pack="true" PackagePath="src/source/LibGit2CS/" />
+    <None Include="../../Directory.Build.props;../../global.json;../../version.json;../../.editorconfig"
+          Pack="true" PackagePath="src/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Hashing" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Xdiff" Version="1.1.1" />
+    <PackageReference Include="LibSsh2CS" Version="0.2.2-dev" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="LibGit2CS.UnitTests" />
+    <InternalsVisibleTo Include="LibGit2CS.Benchmarks" />
+    <InternalsVisibleTo Include="LibGit2CS.IntegrationTests" />
+  </ItemGroup>
+</Project>

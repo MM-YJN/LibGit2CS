@@ -1,0 +1,16 @@
+worktree /tmp/tmp.zAD5HGjnfD/main
+HEAD 5229f8b3fe97fc31e0cd7962143d4052688635e2
+branch refs/heads/master
+
+worktree /tmp/tmp.zAD5HGjnfD/wt1
+HEAD 5229f8b3fe97fc31e0cd7962143d4052688635e2
+branch refs/heads/wt1
+
+worktree /tmp/tmp.zAD5HGjnfD/wt2
+HEAD 5229f8b3fe97fc31e0cd7962143d4052688635e2
+branch refs/heads/wt2
+
+worktree /tmp/tmp.zAD5HGjnfD/wt3
+HEAD 5229f8b3fe97fc31e0cd7962143d4052688635e2
+branch refs/heads/wt3
+

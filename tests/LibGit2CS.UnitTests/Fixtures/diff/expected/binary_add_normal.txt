@@ -1,0 +1,4 @@
+diff --git a/binary.bin b/binary.bin
+new file mode 100644
+index 0000000..bd474b2
+Binary files /dev/null and b/binary.bin differ

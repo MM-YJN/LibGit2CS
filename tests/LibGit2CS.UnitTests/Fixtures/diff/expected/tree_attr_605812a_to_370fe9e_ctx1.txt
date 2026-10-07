@@ -1,0 +1,72 @@
+diff --git a/.gitattributes b/.gitattributes
+deleted file mode 100644
+index 94da4fa..0000000
+--- a/.gitattributes
++++ /dev/null
+@@ -1,7 +0,0 @@
+-* rootattr
+-root_test2 -rootattr
+-root_test3 !rootattr
+-binfile	   		   binary
+-abc		foo bar baz
+-[attr]mymacro positive -negative !rootattr
+-macro* mymacro another=77
+diff --git a/gitattributes b/gitattributes
+new file mode 100644
+index 0000000..2b40c5a
+--- /dev/null
++++ b/gitattributes
+@@ -0,0 +1,24 @@
++* rootattr
++root_test2 -rootattr
++root_test3 !rootattr
++binfile	   		   binary
++abc		foo bar baz
++
++root_test2 multiattr
++root_test3 multi2=foo
++
++root_test3 multiattr=1 multiattr=2 multiattr=3 multi2=abc !multi2
++root_test2 multiattr=string -multiattr
++
++[attr]mymacro positive -negative !rootattr
++macro* mymacro another=77
++
++[attr]macro2 multi2 -multi2 multi3 !multi3 multi3=answer
++macro* macro2 macro2 macro2
++
++# let's try some malicious macro defs
++[attr]firstmacro -thirdmacro -secondmacro
++[attr]secondmacro firstmacro -firstmacro
++[attr]thirdmacro secondmacro=hahaha
++
++macro_bad firstmacro secondmacro thirdmacro
+diff --git a/macro_bad b/macro_bad
+new file mode 100644
+index 0000000..5819a18
+--- /dev/null
++++ b/macro_bad
+@@ -0,0 +1 @@
++boo
+diff --git a/root_test2 b/root_test2
+index 45141a7..4d713dc 100644
+--- a/root_test2
++++ b/root_test2
+@@ -1 +1,6 @@
+ Hello from the root
++
++Some additional lines
++
++Down here below
++
+diff --git a/root_test3 b/root_test3
+index 45141a7..3a6df02 100644
+--- a/root_test3
++++ b/root_test3
+@@ -1 +1,5 @@
+-Hello from the root
++Some additional lines
++
++Down here below the other lines
++
++With even more at the end

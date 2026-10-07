@@ -1,0 +1,33 @@
+diff --git a/root_test3 b/root_test3
+index c96bbb2..3a6df02 100644
+--- a/root_test3
++++ b/root_test3
+@@ -5,8 +5 @@ Down here below the other lines
+ With even more at the end
+-
+-And lots of good stuff
+-
+-Anywhere you want
+-
+-Don't you think
+-
+diff --git a/root_test4.txt b/root_test4.txt
+index fe77377..fb5067b 100644
+--- a/root_test4.txt
++++ b/root_test4.txt
+@@ -1,14 +1 @@
+-Here is some stuff at the start
+-
+-This should go in one hunk
+-
+-Some additional lines
+-
+-Down here below the other lines
+-
+-With even more at the end
+-
+-Followed by a second hunk of stuff
+-
+-That happens down here
+-
++Hello again

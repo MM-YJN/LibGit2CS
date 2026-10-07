@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/LibGit2CS.Benchmarks/LibGit2CS.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/source/">
+    <Project Path="source/LibGit2CS/LibGit2CS.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LibGit2CS.IntegrationTests/LibGit2CS.IntegrationTests.csproj" />
+    <Project Path="tests/LibGit2CS.UnitTests/LibGit2CS.UnitTests.csproj" />
+  </Folder>
+</Solution>

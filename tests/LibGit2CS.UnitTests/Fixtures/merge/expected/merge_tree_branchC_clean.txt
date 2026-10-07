@@ -1,0 +1,5 @@
+23058f9b41e1da2415f42831e7fbf5d07a8c665d
+veal.txt
+
+Auto-merging veal.txt
+CONFLICT (content): Merge conflict in veal.txt

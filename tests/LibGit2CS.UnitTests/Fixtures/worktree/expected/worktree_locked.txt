@@ -1,0 +1,9 @@
+worktree /tmp/tmp.hm5jWWCKy1/main
+HEAD 5229f8b3fe97fc31e0cd7962143d4052688635e2
+branch refs/heads/master
+
+worktree /tmp/tmp.hm5jWWCKy1/wt1
+HEAD 5229f8b3fe97fc31e0cd7962143d4052688635e2
+branch refs/heads/wt1
+locked manual lock reason
+
