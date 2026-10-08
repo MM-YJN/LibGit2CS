@@ -39,6 +39,47 @@ public sealed class StatUtilTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task NativeStat_RegularFile_PreservesUnixMetadata()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        string path = Path.Combine(_tempDir, "native_metadata.txt");
+        await File.WriteAllTextAsync(path, "native stat\n", TestContext.Current.CancellationToken);
+        var info = new FileInfo(path);
+        NativeStat.StatResult stat = NativeStat.GetStat(info);
+
+        Assert.True(stat.Valid);
+        Assert.Equal(NativeStat.GetEuid(), stat.Uid);
+        Assert.NotNull(stat.Gid);
+        Assert.Equal(12, stat.Size);
+        Assert.Equal((ushort)0x8000, stat.TypeBits);
+        long ticks = info.LastWriteTimeUtc.Ticks - DateTime.UnixEpoch.Ticks;
+        Assert.Equal(ticks / TimeSpan.TicksPerSecond, stat.Mtime.Seconds);
+        Assert.InRange((long)stat.Mtime.Nanoseconds - ticks % TimeSpan.TicksPerSecond * 100, 0, 99);
+    }
+
+    [Fact]
+    public void NativeStat_BrokenSymlink_StatsLinkItself()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        string path = Path.Combine(_tempDir, "native_link");
+        File.CreateSymbolicLink(path, "missing_target");
+        NativeStat.StatResult stat = NativeStat.GetStat(new FileInfo(path));
+
+        Assert.True(stat.Valid);
+        Assert.Equal((ushort)0xA000, stat.TypeBits);
+        Assert.Equal(14, stat.Size);
+        Assert.Equal(NativeStat.GetEuid(), stat.Uid);
+    }
+
+    [Fact]
     public async Task GetStatInfo_RegularFile_ReturnsNonZeroIdentityFields_OnUnix()
     {
         if (OperatingSystem.IsWindows())

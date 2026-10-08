@@ -38,7 +38,7 @@ namespace LibGit2CS.IO;
 /// </para>
 /// <para>
 /// <b>Platform dispatch.</b> Linux uses <c>statx(2)</c> (kernel UAPI
-/// <c>struct statx</c>); macOS/BSD use <c>stat(2)</c>; Windows uses
+/// <c>struct statx</c>); macOS uses <c>lstat(2)</c>; Windows uses
 /// <c>GetFileInformationByHandle</c>. All P/Invoke is via
 /// <see cref="LibraryImportAttribute"/> (source-generated marshalling, AOT-
 /// clean). The native structs are blittable (no pointers/strings). On any
@@ -136,10 +136,11 @@ internal static partial class NativeStat
 
     // P/Invoke lives in the nested NativeMethods class (CA1060).
 
-    // ━━ macOS / *BSD: stat(2) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━ macOS: lstat(2) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /// <summary>
-    /// macOS <c>struct stat</c> (<c>sys/stat.h</c>, 64-bit). Uses
+    /// macOS <c>struct stat</c> (Darwin <c>sys/stat.h</c>,
+    /// <c>__DARWIN_STRUCT_STAT64</c>, 144 bytes on x64/arm64). Uses
     /// <c>struct timespec</c> for <c>st_mtimespec</c>/<c>st_ctimespec</c>
     /// (the <c>st_mtime_nsec</c> macro maps to <c>st_mtimespec.tv_nsec</c>
     /// on Apple — <c>src/util/unix/posix.h:28</c>).
@@ -148,23 +149,24 @@ internal static partial class NativeStat
     private struct MacStat
     {
         public uint StDev;          // dev_t
-        public uint StMode;         // mode_t
+        public ushort StMode;       // mode_t
         public ushort StNlink;      // nlink_t
-        public uint StIno;          // ino_t (uint64 on macOS 10.6+, but the
-                                    //  user-side struct packs it here)
+        public ulong StIno;         // ino64_t
         public uint StUid;          // uid_t
         public uint StGid;          // gid_t
-        public long StRdev;         // dev_t
+        public uint StRdev;         // dev_t
         public MacTimespec StAtimespec;
         public MacTimespec StMtimespec;
         public MacTimespec StCtimespec;
+        public MacTimespec StBirthtimespec;
         public long StSize;         // off_t
         public long StBlocks;       // off_t
         public uint StBlksize;      // uint32
         public uint StFlags;        // uint32
         public uint StGen;          // uint32
         public int StLspare;
-        public long StQpad;         // int64 padding
+        public long StQpad1;        // int64 padding
+        public long StQpad2;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -240,7 +242,7 @@ internal static partial class NativeStat
                 return GetStatx(fsInfo);
             }
 
-            if (OperatingSystem.IsMacOS() || OperatingSystem.IsFreeBSD())
+            if (OperatingSystem.IsMacOS())
             {
                 return GetMacStat(fsInfo);
             }
@@ -462,7 +464,10 @@ internal static partial class NativeStat
         IntPtr pathPtr = Marshal.StringToCoTaskMemUTF8(fsInfo.FullName);
         try
         {
-            int rc = NativeMethods.MacStatCall(pathPtr, out MacStat st);
+            // Darwin x64 uses the INODE64 symbol; arm64 uses the unsuffixed ABI.
+            int rc = RuntimeInformation.ProcessArchitecture == Architecture.X64
+                ? NativeMethods.MacStatInode64Call(pathPtr, out MacStat st)
+                : NativeMethods.MacStatCall(pathPtr, out st);
             if (rc != 0)
             {
                 return default;
@@ -472,8 +477,8 @@ internal static partial class NativeStat
                 Ctime: new IndexTime((int)st.StCtimespec.TvSec, (uint)st.StCtimespec.TvNsec),
                 Mtime: new IndexTime((int)st.StMtimespec.TvSec, (uint)st.StMtimespec.TvNsec),
                 Dev: st.StDev,
-                Rdev: (uint)st.StRdev,
-                Ino: st.StIno,
+                Rdev: st.StRdev,
+                Ino: (uint)st.StIno,
                 Uid: st.StUid,
                 Gid: st.StGid,
                 Size: st.StSize,
@@ -590,11 +595,15 @@ internal static partial class NativeStat
             uint mask,
             out Statx stx);
 
-        [LibraryImport("libc", EntryPoint = "stat", SetLastError = true)]
+        [LibraryImport("libc", EntryPoint = "lstat", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.UserDirectories)]
         public static partial int MacStatCall(
             IntPtr path,
             out MacStat st);
+
+        [LibraryImport("libc", EntryPoint = "lstat$INODE64", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.UserDirectories)]
+        public static partial int MacStatInode64Call(IntPtr path, out MacStat st);
 
         [LibraryImport("libc", EntryPoint = "realpath", StringMarshalling = StringMarshalling.Utf8, SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.UserDirectories)]

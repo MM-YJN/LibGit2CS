@@ -393,6 +393,9 @@ public sealed class RepositoryMedParityTests2 : IDisposable
         }
 
         using GitContext ctx = new();
+        ctx.Env["GIT_CONFIG_NOSYSTEM"] = "1";
+        ctx.Dirs.Set(GitSystemDir.Xdg, string.Empty);
+        ctx.Dirs.Set(GitSystemDir.ProgramData, string.Empty);
         string repo = NewDir("owner-not-current");
         _ = await InitAsync(repo, ctx);
         // Isolate from the real global config; mock the owner to "another
@@ -414,6 +417,9 @@ public sealed class RepositoryMedParityTests2 : IDisposable
     public async Task SafeDirectory_GlobalConfig_Exempts()
     {
         using GitContext ctx = new();
+        ctx.Env["GIT_CONFIG_NOSYSTEM"] = "1";
+        ctx.Dirs.Set(GitSystemDir.Xdg, string.Empty);
+        ctx.Dirs.Set(GitSystemDir.ProgramData, string.Empty);
         string repo = NewDir("safe-dir-global");
         _ = await InitAsync(repo, ctx);
         string global = Path.Combine(_tempDir, "safe-dir-global-cfg");
@@ -440,6 +446,9 @@ public sealed class RepositoryMedParityTests2 : IDisposable
         }
 
         using GitContext ctx = new();
+        ctx.Env["GIT_CONFIG_NOSYSTEM"] = "1";
+        ctx.Dirs.Set(GitSystemDir.Xdg, string.Empty);
+        ctx.Dirs.Set(GitSystemDir.ProgramData, string.Empty);
         string repo = NewDir("safe-dir-local");
         _ = await InitAsync(repo, ctx);
         // safe.directory in the REPO's own config must NOT exempt — C reads
@@ -461,6 +470,9 @@ public sealed class RepositoryMedParityTests2 : IDisposable
     public async Task SafeDirectory_Star_Exempts()
     {
         using GitContext ctx = new();
+        ctx.Env["GIT_CONFIG_NOSYSTEM"] = "1";
+        ctx.Dirs.Set(GitSystemDir.Xdg, string.Empty);
+        ctx.Dirs.Set(GitSystemDir.ProgramData, string.Empty);
         string repo = NewDir("safe-dir-star");
         _ = await InitAsync(repo, ctx);
         string global = Path.Combine(_tempDir, "safe-dir-star-cfg");
