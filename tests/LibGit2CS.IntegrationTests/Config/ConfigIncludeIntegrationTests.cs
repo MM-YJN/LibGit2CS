@@ -119,8 +119,8 @@ public sealed class ConfigIncludeIntegrationTests
     /// <summary>
     /// <c>[includeIf "gitdir:&lt;pattern&gt;"] path = &lt;path&gt;</c>
     /// loads the included config only when the repo's gitdir matches the
-    /// pattern. With the pattern <c>.git/</c> (the repo's own gitdir), the
-    /// include is loaded. Exercises the
+    /// pattern. With the repo's canonical gitdir as the pattern, the
+    /// include is loaded even when its input path traverses symlinks. Exercises the
     /// <see cref="FileConfigBackend.MatchGitDir"/> match-true branch.
     /// </summary>
     [Fact]
@@ -133,11 +133,15 @@ public sealed class ConfigIncludeIntegrationTests
         {
             GitRepository repo = await InitRepoWithConfigAsync(
                 path,
-                "[includeIf \"gitdir:" + path.Replace('\\', '/') + "/.git\"]\n\tpath = branch-config\n",
+                "",
                 ctx,
                 ct);
             await using (repo)
             {
+                // libgit2 matches against the canonical repository gitdir.
+                // Build the condition after init has resolved parent symlinks.
+                string condition = "[includeIf \"gitdir:" + repo.Path.TrimEnd('/') + "\"]\n\tpath = branch-config\n";
+                await File.AppendAllTextAsync(Path.Combine(repo.Path, "config"), condition, ct).ConfigureAwait(false);
                 string includedPath = Path.Combine(repo.Path, "branch-config");
                 await File.WriteAllTextAsync(includedPath, "[user]\n\tname = gitdir-match\n", ct).ConfigureAwait(false);
 

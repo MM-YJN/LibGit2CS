@@ -179,9 +179,9 @@ public sealed class RemoteLowParityTests : IDisposable
     {
         // C (clone.c:340-346): p_realpath resolves symlinks for LOCAL RELATIVE paths (git_fs_path_root(url) < 0 gate). The clone path routes
         // through NativeStat.TryRealpath, so remote.origin.url carries the resolved path.
-        if (!OperatingSystem.IsLinux())
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
         {
-            return; // symlink resolution is exercised on Linux
+            return; // native symlink resolution is exercised on Unix
         }
 
         string target = Path.Combine(_tempDir, "real32");
@@ -190,7 +190,7 @@ public sealed class RemoteLowParityTests : IDisposable
         Directory.CreateSymbolicLink(link, target);
 
         string? resolved = NativeStat.TryRealpath(link);
-        Assert.Equal(target, resolved);
+        Assert.Equal(PathHelpers.PrettifyDir(target).TrimEnd('/'), resolved);
     }
 
     // ── ParseRef empty name ────────────────────────────────────

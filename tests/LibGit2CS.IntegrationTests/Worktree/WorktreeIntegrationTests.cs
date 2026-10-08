@@ -1,4 +1,5 @@
 using LibGit2CS.Core;
+using LibGit2CS.IO;
 using LibGit2CS.Objects;
 using LibGit2CS.Refs;
 using LibGit2CS.Repository;
@@ -193,9 +194,9 @@ public sealed class WorktreeIntegrationTests
             LibGit2CS.Repository.Worktree? fromRepo = await wtRepo.WorktreeFromRepositoryAsync(ct);
             Assert.NotNull(fromRepo);
             Assert.Equal("fromrepo", fromRepo!.Name);
-            // The worktree path is stored with forward slashes (the internal
-            // path convention); on Windows the on-disk path uses backslashes.
-            Assert.Equal(wtPath.Replace('\\', '/'), fromRepo.Path);
+            // Stored worktree paths use forward slashes and resolve parent
+            // symlinks, including macOS's /var -> /private/var temporary root.
+            Assert.Equal(PathHelpers.PrettifyDir(wtPath).TrimEnd('/'), fromRepo.Path);
         }
         finally
         {
