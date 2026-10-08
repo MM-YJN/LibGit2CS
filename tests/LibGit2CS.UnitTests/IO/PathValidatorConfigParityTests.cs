@@ -9,7 +9,7 @@ namespace LibGit2CS.UnitTests.IO;
 /// behaviors: <c>core.protectHFS</c>/<c>core.protectNTFS</c> are read from the
 /// repository config, config parse errors are swallowed with the protection
 /// flag left OFF (the "if (!error &amp;&amp; …)" gates), and the config
-/// defaults are <c>GIT_PROTECTHFS_DEFAULT</c> = false /
+/// defaults are <c>GIT_PROTECTHFS_DEFAULT</c> = false on non-Apple /
 /// <c>GIT_PROTECTNTFS_DEFAULT</c> = true. Expectations are C-verified
 /// against libgit2 1.9.4.
 /// </summary>
@@ -103,10 +103,11 @@ public sealed class PathValidatorConfigParityTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task ProtectHfs_DefaultFalse_AcceptsHfsIgnoreListForm()
+    public async Task ProtectHfs_Default_FollowsPlatform()
     {
-        // C (repository.h:119): GIT_PROTECTHFS_DEFAULT = false on non-Apple.
-        Assert.True(await GitPathValidator.IsValidAsync(
+        // C (path.c:266-277): Apple forces HFS protection on; elsewhere
+        // GIT_PROTECTHFS_DEFAULT is false.
+        Assert.Equal(!OperatingSystem.IsMacOS(), await GitPathValidator.IsValidAsync(
             ".g\u200cit", GitPathRejectFlags.DotGit, _repo, fileMode: 0x81A4,
             TestContext.Current.CancellationToken));
     }

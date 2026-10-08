@@ -267,18 +267,18 @@ internal static partial class NativeStat
     /// Matches <c>realpath(3)</c> / <c>p_realpath</c> (the ceiling-directory
     /// check calls it exactly like <c>find_ceiling_dir_offset</c>,
     /// repository.c:497-500). Returns null when the path does not exist or
-    /// cannot be resolved (glibc <c>realpath(path, NULL)</c> with a
+    /// cannot be resolved (<c>realpath(path, NULL)</c> with a
     /// malloc'd buffer, freed with <c>free(3)</c>).
     /// </summary>
     /// <remarks>
-    /// <c>realpath(path, NULL)</c> is glibc-specific; other platforms fall
-    /// back to lexical canonicalization (<see cref="System.IO.Path.GetFullPath(string)"/>),
-    /// which neither resolves symlinks nor requires existence — the
-    /// Linux test environment exercises the exact path.
+    /// Linux and macOS use native <c>realpath(path, NULL)</c> to resolve all
+    /// symlink components. Other platforms use
+    /// <see cref="System.IO.Path.GetFullPath(string)"/> with an existence check
+    /// and resolve the final component when it is a symlink.
     /// </remarks>
     internal static string? TryRealpath(string path)
     {
-        if (!OperatingSystem.IsLinux())
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
         {
             try
             {

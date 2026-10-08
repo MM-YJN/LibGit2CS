@@ -78,24 +78,16 @@ public abstract partial class WorktreeGoldenBase : IDisposable
     {
         // Replace /tmp/tmp.XXXXXX (golden script temp dirs).
         string normalized = TmpTempDirPattern().Replace(output, "<TEMP>");
-        // Replace /tmp/LibGit2CS_WorktreeGolden_XXXXXXXX (C# POSIX test temp dirs).
-        normalized = WorktreeGoldenPosixPattern().Replace(normalized, "<TEMP>");
-        // Replace C:/.../Temp[/N]/LibGit2CS_WorktreeGolden_XXXXXXXX (C# Windows
-        // test temp dirs). Match any drive letter and any intermediate path
-        // up to and including the Temp dir. Forward slashes only — the
-        // formatter already emits forward slashes.
-        normalized = WorktreeGoldenWindowsPattern().Replace(normalized, "<TEMP>");
-        return normalized;
+        // Match the test directory under any temporary root, including macOS
+        // /var/folders and canonical paths reached through symlinked roots.
+        return WorktreeGoldenTempDirPattern().Replace(normalized, "worktree <TEMP>");
     }
 
     [GeneratedRegex(@"/tmp/tmp\.[A-Za-z0-9]+")]
     private static partial Regex TmpTempDirPattern();
 
-    [GeneratedRegex(@"/tmp/LibGit2CS_WorktreeGolden_[A-Za-z0-9]+")]
-    private static partial Regex WorktreeGoldenPosixPattern();
-
-    [GeneratedRegex(@"[A-Za-z]:[^\s]*?Temp(?:/[0-9]+)?/?LibGit2CS_WorktreeGolden_[A-Za-z0-9]+")]
-    private static partial Regex WorktreeGoldenWindowsPattern();
+    [GeneratedRegex(@"(?m)^worktree [^\r\n]*?/LibGit2CS_WorktreeGolden_[A-Za-z0-9]+(?=/)")]
+    private static partial Regex WorktreeGoldenTempDirPattern();
 
     private static async Task<GitOid> WriteCommit(GitRepository repo, string fileName, string content, string message, int day, GitOid? parent)
     {

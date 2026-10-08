@@ -1,4 +1,5 @@
 using LibGit2CS.Core;
+using LibGit2CS.IO;
 using LibGit2CS.Objects;
 using LibGit2CS.Refs;
 using LibGit2CS.Repository;
@@ -346,9 +347,9 @@ public sealed class WorktreeTests : IAsyncLifetime
 
         // The worktree path is the directory (without trailing slash,
         // matching git_fs_path_dirname of the gitlink). Internal paths use
-        // forward slashes (the AGENTS.md path rule), so normalize the
-        // expected path the same way before comparing.
-        Assert.Equal(wtPath.Replace('\\', '/'), wt.Path);
+        // forward slashes and resolve symlinks, so canonicalize the
+        // expected path before comparing.
+        Assert.Equal(PathHelpers.PrettifyDir(wtPath).TrimEnd('/'), wt.Path);
     }
 
     // --- Prune ---

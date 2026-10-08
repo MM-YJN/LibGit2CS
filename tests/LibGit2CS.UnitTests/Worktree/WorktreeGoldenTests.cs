@@ -1,4 +1,5 @@
 using LibGit2CS.Core;
+using LibGit2CS.IO;
 using LibGit2CS.Refs;
 using LibGit2CS.Repository;
 
@@ -20,6 +21,22 @@ namespace LibGit2CS.UnitTests.Worktree;
 /// </remarks>
 public sealed class WorktreeGoldenTests : WorktreeGoldenBase
 {
+    [Theory]
+    [InlineData("/tmp/tmp.ABC123")]
+    [InlineData("/tmp/LibGit2CS_WorktreeGolden_ab12cd34")]
+    [InlineData("/var/folders/nj/session/T/LibGit2CS_WorktreeGolden_ab12cd34")]
+    [InlineData("/private/var/folders/nj/session/T/LibGit2CS_WorktreeGolden_ab12cd34")]
+    [InlineData("C:/Users/Test User/AppData/Local/Temp/LibGit2CS_WorktreeGolden_ab12cd34")]
+    public void NormalizeTempPaths_PreservesWorktreeDetails(string root)
+    {
+        string output = $"worktree {root}/main\nHEAD abc123\nbranch refs/heads/master\n\n"
+            + $"worktree {root}/wt1\nHEAD abc123\nbranch refs/heads/wt1\nlocked reason\n\n";
+        const string expected = "worktree <TEMP>/main\nHEAD abc123\nbranch refs/heads/master\n\n"
+            + "worktree <TEMP>/wt1\nHEAD abc123\nbranch refs/heads/wt1\nlocked reason\n\n";
+
+        Assert.Equal(expected, NormalizeTempPaths(output));
+    }
+
     [Fact]
     public async Task List_NoLinkedWorktrees_MatchesGitWorktreeList()
     {
@@ -73,7 +90,7 @@ public sealed class WorktreeGoldenTests : WorktreeGoldenBase
         LibGit2CS.Repository.Worktree? wt = await repo.WorktreeLookupAsync("wt1", TestContext.Current.CancellationToken);
         Assert.NotNull(wt);
         Assert.Equal("wt1", wt!.Name);
-        Assert.Equal(wtPath.Replace('\\', '/'), wt.Path);
+        Assert.Equal(PathHelpers.PrettifyDir(wtPath).TrimEnd('/'), wt.Path);
     }
 
     [Fact]

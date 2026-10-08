@@ -195,19 +195,29 @@ public sealed class RepositoryEnvParityTests
             await repo.DisposeAsync();
             string config = await File.ReadAllTextAsync(Path.Combine(repoPath, ".git", "config"), TestContext.Current.CancellationToken);
 
-            // C probe exactly these keys, in this order, tab-indented.
-            // The filemode/symlinks/ignorecase keys are filesystem probes:
-            // filemode=false + symlinks=false on Windows (no chmod/symlink
-            // support), ignorecase=true on case-insensitive filesystems
-            // (NTFS). The reference probe ran on Linux.
-            if (OperatingSystem.IsWindows())
+            // Preserve the C probe's key order and exact bytes while deriving
+            // filesystem-dependent values from independent filename checks.
+            bool ignoreCase = File.Exists(Path.Combine(repoPath, ".git", "CoNfIg"));
+            string expected = "[core]\n\tbare = false\n\trepositoryformatversion = 0\n"
+                + (OperatingSystem.IsWindows() ? "\tfilemode = false\n\tsymlinks = false\n" : "\tfilemode = true\n")
+                + (ignoreCase ? "\tignorecase = true\n" : "");
+            if (OperatingSystem.IsMacOS())
             {
-                Assert.Equal("[core]\n\tbare = false\n\trepositoryformatversion = 0\n\tfilemode = false\n\tsymlinks = false\n\tignorecase = true\n\tlogallrefupdates = true\n", config);
+                string probe = "unicode_" + Guid.NewGuid().ToString("N");
+                string composed = Path.Combine(repoPath, probe + "\u00e9");
+                await File.WriteAllBytesAsync(composed, [], TestContext.Current.CancellationToken);
+                try
+                {
+                    bool decomposes = File.Exists(Path.Combine(repoPath, probe + "e\u0301"));
+                    expected += decomposes ? "\tprecomposeunicode = true\n" : "\tprecomposeunicode = false\n";
+                }
+                finally
+                {
+                    File.Delete(composed);
+                }
             }
-            else
-            {
-                Assert.Equal("[core]\n\tbare = false\n\trepositoryformatversion = 0\n\tfilemode = true\n\tlogallrefupdates = true\n", config);
-            }
+
+            Assert.Equal(expected + "\tlogallrefupdates = true\n", config);
         }
         finally
         {

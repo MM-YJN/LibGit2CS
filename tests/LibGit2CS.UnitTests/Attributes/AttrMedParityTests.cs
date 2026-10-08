@@ -175,17 +175,14 @@ public sealed class AttrMedParityTests : IDisposable
     [Fact]
     public async Task IgnoreCase_Default_CaseSensitive()
     {
-        // GIT_IGNORECASE_DEFAULT = GIT_CONFIGMAP_FALSE (repository.h:96-97):
-        // with the config key unset, *.TXT does NOT match file.txt. On
-        // Windows the init probe (is_filesystem_case_insensitive) writes
-        // core.ignorecase=true for NTFS, so the effective default is
-        // case-insensitive there.
-        if (OperatingSystem.IsWindows())
+        // With core.ignorecase unset, the configmap default is false on
+        // every platform. Remove any value written by the init probe.
+        await using GitRepository repo = await GitRepository.InitAsync(NewRepoDir(), isBare: false, NewContext(), TestContext.Current.CancellationToken);
+        if (await repo.Config.GetBoolAsync("core.ignorecase", defaultValue: false, TestContext.Current.CancellationToken))
         {
-            return;
+            await repo.Config.DeleteAsync("core.ignorecase", TestContext.Current.CancellationToken);
         }
 
-        await using GitRepository repo = await GitRepository.InitAsync(NewRepoDir(), isBare: false, NewContext(), TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(Path.Combine(repo.Workdir!, ".gitattributes"), "*.TXT text\n", cancellationToken: TestContext.Current.CancellationToken);
 
         AttributeCache cache = await repo.GetAttributeCacheAsync(TestContext.Current.CancellationToken);

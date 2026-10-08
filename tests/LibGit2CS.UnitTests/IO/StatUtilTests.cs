@@ -39,6 +39,29 @@ public sealed class StatUtilTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task NativeRealpath_ResolvesParentDirectorySymlink()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        string real = Path.Combine(_tempDir, "real");
+        Directory.CreateDirectory(Path.Combine(real, "nested"));
+        string file = Path.Combine(real, "nested", "file.txt");
+        await File.WriteAllTextAsync(file, "content", TestContext.Current.CancellationToken);
+        string link = Path.Combine(_tempDir, "link");
+        Directory.CreateSymbolicLink(link, real);
+
+        string? canonical = NativeStat.TryRealpath(file);
+        Assert.NotNull(canonical);
+        Assert.Equal(canonical, NativeStat.TryRealpath(Path.Combine(link, "nested", "file.txt")));
+        Assert.Equal(NativeStat.TryRealpath(Path.Combine(real, "nested")),
+            NativeStat.TryRealpath(Path.Combine(link, "nested")));
+        Assert.Null(NativeStat.TryRealpath(Path.Combine(link, "nested", "missing.txt")));
+    }
+
+    [Fact]
     public async Task NativeStat_RegularFile_PreservesUnixMetadata()
     {
         if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())

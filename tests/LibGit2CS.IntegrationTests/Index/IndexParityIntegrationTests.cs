@@ -105,18 +105,18 @@ public sealed class IndexParityIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task IgnoreCase_Default_False_LikeC()
+    public async Task IgnoreCase_AfterInit_FollowsFilesystem_LikeC()
     {
         // GIT_IGNORECASE_DEFAULT = GIT_CONFIGMAP_FALSE on every platform.
         // BUT the init probe (is_filesystem_case_insensitive,
         // repository.c:2140-2150) writes core.ignorecase=true on
-        // case-insensitive filesystems (NTFS on Windows), so the effective
+        // case-insensitive filesystems (APFS on macOS or NTFS on Windows), so the effective
         // default follows the filesystem.
         string path = Path.Combine(_tempDir, "ignorecase-default");
         using GitContext ctx = new();
         await using GitRepository repo = await GitRepository.InitAsync(path, isBare: false, ctx, TestContext.Current.CancellationToken);
         GitIndex index = await repo.GetIndexAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(OperatingSystem.IsWindows(), index.IgnoreCase);
+        Assert.Equal(File.Exists(Path.Combine(repo.Path, "CoNfIg")), index.IgnoreCase);
     }
 
     [Fact]
