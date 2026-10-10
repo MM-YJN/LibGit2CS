@@ -4,6 +4,8 @@ LibGit2CS is a managed C# port of **libgit2 1.9.4**. It provides Git repository,
 object, reference, index, diff, history, and remote operations without a native
 libgit2 dependency. Some filesystem operations use platform OS APIs.
 
+The porting work is primarily done by AI.
+
 ## Requirements and installation
 
 The library targets **.NET 11**. To build this checkout, install the SDK pinned
